@@ -17,6 +17,13 @@
    <item row="1" column="0">
     <widget class="QListWidget" name="listWidget"/>
    </item>
+   <item row="2" column="0">
+    <widget class="QPushButton" name="pushButton">
+     <property name="text">
+      <string>删除选中项</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>

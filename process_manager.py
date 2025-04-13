@@ -1,5 +1,5 @@
 import json
-from PyQt6.QtWidgets import QDialog
+from PyQt6.QtWidgets import QDialog, QMessageBox
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.uic import loadUi
 
@@ -36,8 +36,9 @@ class ProcessManagerDialog(QDialog):
             self.listWidget.addItem(item_text)
 
     def connect_signals(self):
-        """连接 listWidget 点击信号"""
+        """连接 listWidget 和 pushButton 信号"""
         self.listWidget.itemClicked.connect(self.toggle_mode)
+        self.pushButton.clicked.connect(self.delete_selected_process)
 
     def toggle_mode(self, item):
         """切换项目 mode 状态并保存"""
@@ -58,6 +59,38 @@ class ProcessManagerDialog(QDialog):
 
         # 发出更新信号
         self.updated.emit()
+
+    def delete_selected_process(self):
+        """删除选中的项目"""
+        selected_items = self.listWidget.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(self, "警告", "请先选择一个项目")
+            return
+
+        # 获取选中项目名称
+        selected_item = selected_items[0]
+        process_name = selected_item.text().split(' (')[0]
+
+        # 弹出确认对话框
+        reply = QMessageBox.question(
+            self, "确认删除", f"是否删除选中项 {process_name}？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            # 从 processes 中删除
+            del self.processes[process_name]
+
+            # 保存到 process.json
+            with open(self.process_file, 'w', encoding='utf-8') as f:
+                json.dump(self.processes, f, ensure_ascii=False, indent=2)
+
+            # 更新 listWidget
+            self.listWidget.takeItem(self.listWidget.row(selected_item))
+
+            # 发出更新信号
+            self.updated.emit()
 
     def closeEvent(self, event):
         """窗口关闭时发出信号"""
